@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 )
 
 const (
@@ -57,6 +57,15 @@ func GetJWTField(ctx context.Context, tokenField string, keyfunc jwt.Keyfunc) (s
 
 // GetAccountID gets the JWT from a context and returns the AccountID field
 func GetAccountID(ctx context.Context, keyfunc jwt.Keyfunc) (string, error) {
+	// Get account ID from context
+	for _, tenantField := range multiTenancyVariants {
+		accountID := ctx.Value(tenantField)
+		if accountID == nil {
+			continue
+		}
+		return fmt.Sprintf("%v", accountID), nil
+	}
+	// Get account ID from token
 	for _, tenantField := range multiTenancyVariants {
 		if val, err := GetJWTField(ctx, tenantField, keyfunc); err == nil {
 			return val, nil
